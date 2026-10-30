@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     # Un servicio dormido (Render gratis) puede tardar ~50 s en despertar.
     upstream_timeout_seconds: float = 90.0
 
+    # /health/all: reintentos mientras un servicio dormido arranca (8 x 6 s ~ 48 s).
+    health_retries: int = 8
+    health_retry_delay_seconds: float = 6.0
+
     # Autenticacion: si es false, el gateway enruta sin exigir JWT (solo para depurar).
     auth_enforce: bool = True
     # Rutas (prefijos, sin el nombre del servicio) que exigen rol admin.

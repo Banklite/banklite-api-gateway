@@ -88,3 +88,29 @@ def test_health_all():
 def test_auth_desactivable_para_depurar():
     settings.auth_enforce = False
     assert c.get("/account/accounts").status_code == 200
+
+
+def test_health_all_espera_a_que_despierte_un_servicio(monkeypatch):
+    settings.health_retry_delay_seconds = 0
+    estados = {"n": 0}
+
+    def despertando(request: httpx.Request) -> httpx.Response:
+        if "9002" in str(request.url):
+            estados["n"] += 1
+            return httpx.Response(429 if estados["n"] < 3 else 200, json={"status": "ok"})
+        return httpx.Response(200, json={"status": "ok"})
+
+    monkeypatch.setattr(settings, "account_service_url", "http://x:9002")
+    main._client = httpx.AsyncClient(transport=httpx.MockTransport(despertando))
+    r = c.get("/health/all")
+    assert r.status_code == 200 and r.json()["servicios"]["account"]["intentos"] == 3
+
+
+def test_health_all_reporta_el_que_no_despierta(monkeypatch):
+    settings.health_retry_delay_seconds = 0
+    monkeypatch.setattr(settings, "health_retries", 3)
+    monkeypatch.setattr(settings, "ledger_service_url", "http://x:9003")
+    main._client = httpx.AsyncClient(transport=httpx.MockTransport(
+        lambda rq: httpx.Response(502) if "9003" in str(rq.url) else httpx.Response(200, json={})))
+    r = c.get("/health/all")
+    assert r.status_code == 503 and r.json()["servicios"]["ledger"] == {"status": "http 502", "intentos": 3, "ms": r.json()["servicios"]["ledger"]["ms"]}

@@ -88,17 +88,24 @@ def health():
 
 @app.get("/health/all", tags=["infra"])
 async def health_all():
-    """Consulta /health de los 8 servicios en paralelo. Sirve para despertarlos (Render gratis)
-    y como monitor: apuntar aqui un ping externo cada 5 min los mantiene activos."""
+    """Consulta /health de los 8 servicios en paralelo y espera (hasta ~HEALTH_RETRIES x DELAY s)
+    a que los dormidos de Render gratis despierten. Sirve para despertarlos antes de una demo."""
 
     async def one(name: str, url: str):
+        """Un servicio dormido responde 429/502/503 mientras arranca: se reintenta hasta que despierte."""
         t0 = time.monotonic()
-        try:
-            r = await _http().get(f"{url}/health")
-            return name, {"status": "ok" if r.status_code == 200 else f"http {r.status_code}",
-                          "ms": int((time.monotonic() - t0) * 1000)}
-        except Exception as exc:  # noqa: BLE001
-            return name, {"status": "caido", "error": type(exc).__name__, "ms": int((time.monotonic() - t0) * 1000)}
+        estado = "caido"
+        for intento in range(1, settings.health_retries + 1):
+            try:
+                r = await _http().get(f"{url}/health")
+                estado = "ok" if r.status_code == 200 else f"http {r.status_code}"
+            except Exception as exc:  # noqa: BLE001
+                estado = f"caido ({type(exc).__name__})"
+            if estado == "ok":
+                break
+            if intento < settings.health_retries:
+                await asyncio.sleep(settings.health_retry_delay_seconds)
+        return name, {"status": estado, "intentos": intento, "ms": int((time.monotonic() - t0) * 1000)}
 
     resultados = dict(await asyncio.gather(*(one(n, u) for n, u in settings.upstreams.items())))
     todos = all(v["status"] == "ok" for v in resultados.values())

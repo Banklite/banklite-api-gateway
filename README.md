@@ -13,7 +13,7 @@ Parte del proyecto **BankLite** de *Arquitectura y Modelamiento de Software*, Un
 | **Rate limiting** | Ventana de 60 s por IP: 240 peticiones/min en general y 15/min en login, OTP, PIN y cambio de clave (frena fuerza bruta). Responde `429` con `Retry-After`. |
 | **Enrutamiento** | `/<servicio>/<ruta>` → `<URL del servicio>/<ruta>`. |
 | **Logging** | Una linea por peticion: metodo, ruta, estado, milisegundos, IP, usuario y `X-Request-ID` (que tambien viaja al microservicio). |
-| **Salud agregada** | `GET /health/all` consulta los 8 servicios en paralelo; sirve para despertarlos en Render gratis. |
+| **Salud agregada** | `GET /health/all` consulta los 8 servicios en paralelo y reintenta (hasta ~48 s) mientras los dormidos de Render gratis despiertan. |
 
 Comunicacion: REST. Los microservicios siguen hablando entre si directamente (REST y eventos en RabbitMQ), sin pasar por el gateway.
 
@@ -63,7 +63,7 @@ Ver `.env.example`.
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q tests           # 10 pruebas
+python -m pytest -q tests           # 12 pruebas
 uvicorn app.main:app --reload --port 8000
 ```
 

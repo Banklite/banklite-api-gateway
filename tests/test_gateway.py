@@ -114,3 +114,10 @@ def test_health_all_reporta_el_que_no_despierta(monkeypatch):
         lambda rq: httpx.Response(502) if "9003" in str(rq.url) else httpx.Response(200, json={})))
     r = c.get("/health/all")
     assert r.status_code == 503 and r.json()["servicios"]["ledger"] == {"status": "http 502", "intentos": 3, "ms": r.json()["servicios"]["ledger"]["ms"]}
+
+
+def test_no_reenvia_la_compresion_del_navegador():
+    """El navegador acepta br/zstd; el gateway pide el cuerpo sin comprimir para no devolverlo ilegible."""
+    r = c.get("/transfer/transfers/trm", headers={"Accept-Encoding": "gzip, deflate, br, zstd"})
+    assert r.status_code == 200
+    assert llamadas[-1].headers["accept-encoding"] == "identity"

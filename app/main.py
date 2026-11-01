@@ -159,6 +159,10 @@ async def proxy(service: str, path: str, request: Request):
 
         # --- enrutamiento ---
         headers = {k: v for k, v in request.headers.items() if k.lower() not in _HOP}
+        # El gateway devuelve el cuerpo ya leido y descomprimido, asi que no debe pedirle al servicio
+        # la compresion que acepta el navegador (br/zstd): si el cliente httpx no la sabe descomprimir,
+        # el cuerpo llega ilegible al panel aunque el estado sea 200.
+        headers["accept-encoding"] = "identity"
         headers["X-Request-ID"] = rid
         headers["X-Forwarded-For"] = ip
         if claims:

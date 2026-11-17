@@ -71,6 +71,25 @@ Docker: `docker build -t banklite-api-gateway . && docker run --env-file .env -p
 
 Documentacion: `/docs`. El gateway no tiene base de datos propia (no guarda estado; el rate limiting vive en memoria).
 
+## Pruebas automatizadas
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest tests -v --cov=app --cov-report=term-missing --cov-report=html
+```
+
+No necesitan PostgreSQL, RabbitMQ ni los otros microservicios: la base es SQLite en memoria y las dependencias externas se reemplazan con mocks (`unittest.mock`). El reporte navegable queda en `htmlcov/index.html`.
+
+| Tipo | Archivo | Que verifica |
+|---|---|---|
+| Unitaria (mocks) | `tests/unit/test_ratelimit.py` | Limitador de peticiones por ventana deslizante, con el reloj simulado. |
+| Unitaria | `tests/unit/test_reglas_de_ruteo.py` | Que rutas son publicas, cuales son sensibles (limite estricto) y como se obtiene la IP del cliente. |
+| Integracion | `tests/integration/test_gateway.py` | Gateway completo con los microservicios simulados (`httpx.MockTransport`): JWT, rol admin, ruteo, rate limit y `/health/all`. |
+
+Resultado actual: **31 pruebas** (18 unitarias y 13 de integracion), todas aprobadas, con **93 % de cobertura** de `app/`.
+
+En GitHub Actions las pruebas corren en cada `push` y `pull request`. Si una falla, la imagen no se construye y no se despliega. El reporte de cobertura queda en el resumen de la ejecucion y como artefacto descargable `coverage-banklite-api-gateway`.
+
 ## Conectar el panel web
 
 En Vercel, apunta cada variable al gateway y vuelve a desplegar:

@@ -147,7 +147,7 @@ Estrategia de ramas:
 
 ## Conectar el panel web
 
-En Vercel, apunta cada variable al gateway y vuelve a desplegar:
+En Render, en las variables de entorno del panel, apunta cada variable al gateway y vuelve a desplegar:
 
 ```
 NEXT_PUBLIC_IDENTITY_API_URL=https://<gateway>/identity

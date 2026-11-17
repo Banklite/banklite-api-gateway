@@ -1,0 +1,64 @@
+# Configuracion de Prometheus para todo BankLite (vista del sistema completo).
+# Modelo pull: cada 15 segundos Prometheus consulta GET /metrics del servicio desplegado en Render.
+global:
+  scrape_interval: 15s      # cada cuanto se consultan las metricas
+  evaluation_interval: 15s  # cada cuanto se evaluan las reglas de alerta
+
+rule_files:
+  - alertas.yml
+
+scrape_configs:
+  # El gateway: descomenta este bloque y pon el host publico del gateway en Render.
+  # - job_name: banklite-api-gateway
+  #   scheme: https
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets: ['HOST-DEL-GATEWAY.onrender.com']
+
+  - job_name: banklite-identity-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-identity-service-kc5q.onrender.com']
+
+  - job_name: banklite-account-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-account-service.onrender.com']
+
+  - job_name: banklite-ledger-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-ledger-service.onrender.com']
+
+  - job_name: banklite-transfer-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-transfer-service.onrender.com']
+
+  - job_name: banklite-card-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-card-service.onrender.com']
+
+  - job_name: banklite-fraud-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-fraud-service.onrender.com']
+
+  - job_name: banklite-notification-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-notification-service.onrender.com']
+
+  - job_name: banklite-compliance-service
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['banklite-compliance-service.onrender.com']

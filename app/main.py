@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from .config import settings
+from .metrics import instrumentar
 from .ratelimit import limiter
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -34,6 +35,8 @@ app = FastAPI(
     ),
     version="1.0.0",
 )
+
+instrumentar(app)  # metricas para Prometheus en GET /metrics
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
     expose_headers=["X-Request-ID", "Retry-After"],
